@@ -1,8 +1,8 @@
-// Main program file MAIN5.C
+// Main program file MAIN6.C
 // Written by Daniel W. Lewis
 // Revised Jan 2, 2015
 //
-// Purpose: Create double size and half size versions of an image.
+// Purpose: Create horizontally and vertically mirrored versions of an image.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +10,11 @@
 #include <sys/stat.h>
 #include "bmp3.h"
 
-IMAGE	*HalfSize(IMAGE *image) ;
-IMAGE	*DoubleSize(IMAGE *image) ;
+void	MirrorRows(IMAGE *image, unsigned min, unsigned max) ;
+void	MirrorCols(IMAGE *image, unsigned row, unsigned min, unsigned max) ;
+
+IMAGE	*MirrorLeftRight(IMAGE *image) ;
+IMAGE	*MirrorUpDown(IMAGE *image) ;
 
 typedef struct
 	{
@@ -28,9 +31,9 @@ int main(int argc, char **argv)
 	char *src_filespec, *dst_filespec ;
 	static OPTION options[] =
 		{
-		{"Half Size",			HalfSize,			  0.0},
-		{"Double Size",			DoubleSize,			  0.0},
-		{NULL,					NULL,				  0.0}
+		{"Mirror Left-Right",	MirrorLeftRight,	   0},
+		{"Mirror Up-Down",		MirrorUpDown,		   0},
+		{NULL,					NULL,				   0}
 		} ;
 	OPTION *option ;
 	IMAGE *image ;
@@ -61,45 +64,36 @@ int main(int argc, char **argv)
 	return 0 ;
 	}
 
-IMAGE *DoubleSize(IMAGE *src)
-    {
-    int i, j, m = 0, n = 0;
-    IMAGE *newimage;
-    newimage = NewImage(src->rows*2, src->cols*2);
-    for(i = 0; i < src->rows; i++)
-        {
-        for(j = 0; j < src->cols; j++)
-            {
-            newimage->pxlrow[m][n].red = newimage->pxlrow[m][n + 1].red = newimage->pxlrow[m + 1][n].red = newimage->pxlrow[m+1][n+1].red = src->pxlrow[i][j].red;
-            newimage->pxlrow[m][n].blu = newimage->pxlrow[m][n + 1].blu = newimage->pxlrow[m + 1][n].blu = newimage->pxlrow[m+1][n+1].blu = src->pxlrow[i][j].blu;
-            newimage->pxlrow[m][n].grn = newimage->pxlrow[m][n + 1].grn = newimage->pxlrow[m + 1][n].grn = newimage->pxlrow[m+1][n+1].grn = src->pxlrow[i][j].grn;
-            n += 2;
-            }
-        n = 0;
-        m += 2;
-        }
-    return newimage;
-    }
+void MirrorCols(IMAGE *image, unsigned row, unsigned min, unsigned max)
+	{
+	// To be completed by student ...
+	}
 
-IMAGE *HalfSize(IMAGE *src)
-    {
-    int i, j, m = 0, n = 0;
-    IMAGE *newimage;
-    newimage = NewImage((src->rows/2), (src->cols/2));
-    for(i = 0; i < newimage->rows; i++)
-        {
-        for(j = 0; j < newimage->cols; j++)
-            {
-            newimage->pxlrow[i][j].red = (src->pxlrow[m][n].red + src->pxlrow[m][n + 1].red + src->pxlrow[m + 1][n].red + src->pxlrow[m+1][n+1].red)/4;
-            newimage->pxlrow[i][j].blu = (src->pxlrow[m][n].blu + src->pxlrow[m][n + 1].blu + src->pxlrow[m + 1][n].blu + src->pxlrow[m+1][n+1].blu)/4;
-            newimage->pxlrow[i][j].grn = (src->pxlrow[m][n].grn + src->pxlrow[m][n + 1].grn + src->pxlrow[m + 1][n].grn + src->pxlrow[m+1][n+1].grn)/4;
-            n += 2;
-            }
-        n = 0;
-        m += 2;
-        }
-    return newimage;
-    }
+void MirrorRows(IMAGE *image, unsigned min, unsigned max)
+	{
+	// To be completed by student ...
+	}
+
+IMAGE *MirrorLeftRight(IMAGE *image)
+	{
+	unsigned cols = image->cols ;
+	unsigned rows = image->rows ;
+	unsigned row ;
+
+	for (row = 0; row < rows; row++)
+		{
+		MirrorCols(image, row, 0, cols - 1) ;
+		}
+
+	return image ;
+	}
+
+IMAGE *MirrorUpDown(IMAGE *image)
+	{
+	MirrorRows(image, 0, image->rows - 1) ;
+
+	return image ;
+	}
 
 OPTION *GetOption(int argc, char **argv, OPTION options[])
 	{
