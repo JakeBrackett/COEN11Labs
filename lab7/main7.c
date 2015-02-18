@@ -1,27 +1,31 @@
-// Main program file MAIN6.C
+// Main program file MAIN7.C
 // Written by Daniel W. Lewis
-// Revised Jan 2, 2015
+// Revised Feb 13, 2015
 //
-// Purpose: Create horizontally and vertically mirrored versions of an image.
+// Purpose: Create horizontally and vertically mirrored versions of an image using multi-threading.
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <sys/stat.h>
 #include "bmp3.h"
+#include <pthread.h>
 
-void	MirrorRows(IMAGE *image, unsigned min, unsigned max) ;
-void	MirrorCols(IMAGE *image, unsigned row, unsigned min, unsigned max) ;
+void *ThreadMirrorCols(void *arg);
+IMAGE *MirrorLeftRight(IMAGE *image);
 
-IMAGE	*MirrorLeftRight(IMAGE *image) ;
-IMAGE	*MirrorUpDown(IMAGE *image) ;
+void *ThreadMirrorRows(void *arg);
+IMAGE *MirrorUpDown(IMAGE *image);
 
+IMAGE * image;
 typedef struct
 	{
 	char	*format ;
 	IMAGE	*(*function)() ;
 	double	param ;
 	} OPTION ;
+
+#define NUM_THREADS 8 
 
 OPTION	*GetOption(int argc, char **argv, OPTION options[]) ;
 void	DisplayImage(char *filespec, char *format, ...) ;
@@ -36,7 +40,6 @@ int main(int argc, char **argv)
 		{NULL,					NULL,				   0}
 		} ;
 	OPTION *option ;
-	IMAGE *image ;
 
 	if (argc != 3 && argc != 4)
 		{
@@ -64,49 +67,51 @@ int main(int argc, char **argv)
 	return 0 ;
 	}
 
-void MirrorCols(IMAGE *image, unsigned row, unsigned min, unsigned max){
+
+void *ThreadMirrorCols(void *arg)
+	{
     PIXEL temp;
-    if(max > min){
+    if(max > min)
+        {
         temp=image->pxlrow[row][min];
         image->pxlrow[row][min] = image->pxlrow[row][max];
         image->pxlrow[row][max] = temp;
         MirrorCols(image, row, min+1, max-1);
-    }
-}
-
-void MirrorRows(IMAGE *image, unsigned min, unsigned max){
-    int col;
-    PIXEL temp;
-    if(max > min){
-        for(col = 0; col < image->cols; col++){
-            temp = image->pxlrow[min][col];
-            image->pxlrow[min][col] = image->pxlrow[max][col];
-            image->pxlrow[max][col] = temp;
         }
-        MirrorRows(image, min+1, max-1);
     }
-}
 
 IMAGE *MirrorLeftRight(IMAGE *image)
 	{
-	unsigned cols = image->cols ;
-	unsigned rows = image->rows ;
-	unsigned row ;
-
-	for (row = 0; row < rows; row++)
-		{
-		MirrorCols(image, row, 0, cols - 1) ;
-		}
-
-	return image ;
+	   	// To be completed by student ...	
 	}
 
-IMAGE *MirrorUpDown(IMAGE *image)
+void *ThreadMirrorRows(void *arg)
 	{
-	MirrorRows(image, 0, image->rows - 1) ;
+    int col;
+    PIXEL temp;
+    row = *((int*) arg);
+    if(max > min)
+        {
+        for(col = 0; col < image->cols; col++)
+            {
+            temp = image->pxlrow[min][col];
+            image->pxlrow[min][col] = image->pxlrow[max][col];
+            image->pxlrow[max][col] = temp;
+            }
+        MirrorRows(image, min+1, max-1);
+        }
+    }
 
-	return image ;
-	}
+IMAGE *MirrorUpDown(IMAGE *image){
+    int thread, *p_row;
+    *p_row = 0;
+    pthread_t id[NUM_THREADS];
+    for(thread = 0; thread < NUM_THREADS; thread++){
+        pthread_create(id[thread], NULL, ThreadMirrorRows, (void*)p_row);
+        *p_row += image->rows/NUM_THREADS
+    }
+}
+
 
 OPTION *GetOption(int argc, char **argv, OPTION options[])
 	{
