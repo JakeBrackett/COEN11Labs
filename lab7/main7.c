@@ -25,7 +25,7 @@ typedef struct
 	double	param ;
 	} OPTION ;
 
-#define NUM_THREADS 8 
+#define NUM_THREADS 8
 
 OPTION	*GetOption(int argc, char **argv, OPTION options[]) ;
 void	DisplayImage(char *filespec, char *format, ...) ;
@@ -68,48 +68,55 @@ int main(int argc, char **argv)
 	}
 
 
-void *ThreadMirrorCols(void *arg)
-	{
+void *ThreadMirrorCols(void *arg){
     PIXEL temp;
-    if(max > min)
-        {
-        temp=image->pxlrow[row][min];
-        image->pxlrow[row][min] = image->pxlrow[row][max];
-        image->pxlrow[row][max] = temp;
-        MirrorCols(image, row, min+1, max-1);
+    int row, col, start = (int) arg;
+    for(col = start; col - start <= (image->cols)/(NUM_THREADS*2); col++){
+        for(row = 0; row < image->rows; row++){
+            temp=image->pxlrow[row][col];
+            image->pxlrow[row][col] = image->pxlrow[row][(image->cols-1) - col];
+            image->pxlrow[row][(image->cols-1) - col] = temp;
         }
     }
+    
+    pthread_exit(NULL);
+}
 
-IMAGE *MirrorLeftRight(IMAGE *image)
-	{
-	   	// To be completed by student ...	
-	}
-
-void *ThreadMirrorRows(void *arg)
-	{
-    int col;
-    PIXEL temp;
-    row = *((int*) arg);
-    if(max > min)
-        {
-        for(col = 0; col < image->cols; col++)
-            {
-            temp = image->pxlrow[min][col];
-            image->pxlrow[min][col] = image->pxlrow[max][col];
-            image->pxlrow[max][col] = temp;
-            }
-        MirrorRows(image, min+1, max-1);
-        }
+IMAGE *MirrorLeftRight(IMAGE *image){
+    int t;
+    pthread_t id[NUM_THREADS];
+    for(t = 0; t < NUM_THREADS; t++){
+        pthread_create(&id[t], NULL, ThreadMirrorCols, (void *) (t* ((image->cols + 7)/NUM_THREADS)/2));
     }
+    for(t = 0; t < NUM_THREADS; t++){
+        pthread_join(id[t], NULL);
+    }
+    return image;
+}
+
+void *ThreadMirrorRows(void *arg){
+    PIXEL *temp;
+    int start = (int) arg, row, col;
+    for(row=start; row < start + (((image->rows + 7)/NUM_THREADS)/2); row++){
+        if (row == (image->rows + 1) / 2) break;
+        temp=image->pxlrow[row];
+        image->pxlrow[row] = image->pxlrow[image->rows-1-row];
+        image->pxlrow[image->rows-1-row] = temp;
+        
+    }
+    pthread_exit(NULL);
+}
 
 IMAGE *MirrorUpDown(IMAGE *image){
-    int thread, *p_row;
-    *p_row = 0;
+    int t;
     pthread_t id[NUM_THREADS];
-    for(thread = 0; thread < NUM_THREADS; thread++){
-        pthread_create(id[thread], NULL, ThreadMirrorRows, (void*)p_row);
-        *p_row += image->rows/NUM_THREADS
+    for(t = 0; t < NUM_THREADS; t++){
+        pthread_create(&id[t], NULL, ThreadMirrorRows, (void *) (t * ((image->rows + 7)/NUM_THREADS)/2));
     }
+    for(t = 0; t < NUM_THREADS; t++){
+        pthread_join(id[t], NULL);
+    }
+    return image;
 }
 
 
