@@ -43,10 +43,24 @@ int main(int argc, char **argv)
 	return 0 ;
 	}
 
-AUDIO *AdjustTone(AUDIO *audio, unsigned percent_bass, unsigned percent_treble)
-	{
-	// To be completed by student ...
-	}
+AUDIO *AdjustTone(AUDIO *audio, unsigned percent_bass, unsigned percent_treble){
+    int sample;
+    SAMPLE sample_difference, bass_part, orig_part, treb_part, prev_sample = 0;
+    double sample_average = 0;
+    for(sample = 0; sample < audio->num_samples; sample++){
+        sample_average = (0.9 * sample_average) + (0.1 * audio->samples[sample]);
+        sample_difference = audio->samples[sample] - prev_sample;
+        
+        bass_part = (SAMPLE)(int)(sample_average * (percent_bass/100));
+        orig_part = audio->samples[sample] * ((100 - percent_bass - percent_treble)/100);
+        treb_part = sample_difference * (percent_treble/100);
+        
+        prev_sample = audio->samples[sample];
+        
+        audio->samples[sample] = (2 * bass_part) + orig_part + (2 * treb_part);
+    }
+    return audio;
+}
 
 void DisplayAudio(char *filespec)
 	{
@@ -66,7 +80,7 @@ void DisplayAudio(char *filespec)
 #elif defined(__unix)
 	sprintf(command, "audacity \"%s\"", filespec) ;
 #elif defined(__APPLE__)
-	sprintf(command, "/Applications/Audacity.app/Contents/MacOS/Audacity \"%s\"", filespec) ;
+	sprintf(command, "/Applications/VLC.app/Contents/MacOS/VLC \"%s\"", filespec) ;
 #endif 
 	system(command) ;
 	}
