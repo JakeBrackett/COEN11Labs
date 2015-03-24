@@ -61,9 +61,30 @@ int main(int argc, char **argv)
 	return 0 ;
 	}
 
-AUDIO *RemoveSilence(AUDIO *audio, unsigned max_level, unsigned min_samples){
-        
-}
+AUDIO *RemoveSilence(AUDIO *audio, unsigned max_level, unsigned min_samples)
+    {
+    unsigned currindex, frstndex = 0, lastndex;
+    for(currindex = 0; currindex < audio->num_samples; currindex++)
+        {
+        if(audio->samples[currindex] <= max_level)
+            {
+            if(frstndex == 0)
+                {
+                frstndex = currindex;
+                }
+            if(audio->samples[currindex+1] >= max_level)
+                {
+                lastndex = currindex;
+                if(lastndex - frstndex >= min_samples)
+                    {
+                    audio = DeleteSegment(audio, frstndex, lastndex);
+                    }
+                frstndex = 0;
+                }
+            }
+        }
+    return audio;
+    }
 
 void DisplayAudio(char *filespec)
 	{
@@ -83,7 +104,7 @@ void DisplayAudio(char *filespec)
 #elif defined(__unix)
 	sprintf(command, "audacity \"%s\"", filespec) ;
 #elif defined(__APPLE__)
-	sprintf(command, "/Applications/VLC.app/Contents/MacOS/VLC \"%s\"", filespec) ;
+	sprintf(command, "/Applications/Audacity.app/Contents/MacOS/Audacity \"%s\"", filespec) ;
 #endif 
 	system(command) ;
 	}
